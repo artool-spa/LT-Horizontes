@@ -3,8 +3,43 @@
 <head>
 <meta charset="utf-8" />
 <title>Descifra · LT Horizontes 2026</title>
-<meta name="viewport" content="width=1920, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <link rel="stylesheet" href="styles.css" />
+<style>
+  html, body { overscroll-behavior-x: none; }
+
+  #rotate-prompt {
+    display: none;
+    position: fixed; inset: 0;
+    background: #0e0d0c;
+    color: #fff;
+    z-index: 99999;
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 18px;
+    font: 16px/1.5 -apple-system, system-ui, sans-serif;
+    text-align: center;
+    padding: 24px;
+    padding-top: max(24px, env(safe-area-inset-top));
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
+  }
+  #rotate-prompt .icon {
+    width: 72px; height: 72px;
+    display: grid; place-items: center;
+    color: #fff;
+    animation: rp-rotate 2.4s ease-in-out infinite;
+  }
+  #rotate-prompt .icon svg { width: 100%; height: 100%; fill: currentColor; }
+  #rotate-prompt .msg { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  #rotate-prompt .sub { opacity: 0.55; font-size: 14px; max-width: 280px; }
+  @keyframes rp-rotate {
+    0%, 55%, 100% { transform: rotate(-90deg); }
+    25%           { transform: rotate(0deg); }
+  }
+  @media (orientation: portrait) and (pointer: coarse) {
+    #rotate-prompt { display: flex; }
+  }
+</style>
 <script type="application/json" id="speaker-notes">
 [
   "Miguel entra al escenario en silencio. Camina hasta el centro. Mira a la sala unos segundos. No saluda todavía. La pantalla negra fuerza atención al cuerpo, no a las palabras. Cuando aparece la palabra grande, empieza suavemente: Buenos días. Hoy vamos a hablar de un país que ya existe pero que casi nadie ha visto.",
@@ -25,6 +60,14 @@
 </script>
 </head>
 <body>
+
+<div id="rotate-prompt" aria-hidden="true">
+  <div class="icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24"><path d="M7.34 6.41 1.41 12.34a2 2 0 0 0 0 2.83l5.34 5.34a2 2 0 0 0 2.83 0l10.6-10.59a2 2 0 0 0 0-2.83L14.83 1.76a2 2 0 0 0-2.83 0L7.34 6.41Zm9.07 11.84-2.83-2.83 5.93-5.93 2.83 2.83-5.93 5.93ZM4.93 13.76 13 5.69l2.83 2.83-8.07 8.07-2.83-2.83Z"/></svg>
+  </div>
+  <div class="msg">Gira tu teléfono</div>
+  <div class="sub">La presentación se ve mejor en horizontal</div>
+</div>
 
 <deck-stage>
 
@@ -551,6 +594,33 @@
   });
   // Initial — set after the stage has bootstrapped its slides
   setTimeout(() => setActive(0), 50);
+
+  // Swipe navigation for touch devices.
+  // Calls deck-stage.next() / prev() — the public API.
+  let sx = 0, sy = 0, sTime = 0, tracking = false;
+  document.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { tracking = false; return; }
+    // Don't intercept swipes inside the Slido iframe.
+    if (e.target.closest && e.target.closest('iframe, .slido-frame')) { tracking = false; return; }
+    sx = e.touches[0].clientX;
+    sy = e.touches[0].clientY;
+    sTime = performance.now();
+    tracking = true;
+  }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx;
+    const dy = t.clientY - sy;
+    const dt = performance.now() - sTime;
+    const adx = Math.abs(dx), ady = Math.abs(dy);
+    // Horizontal swipe: > 50px, dominantly horizontal, completed in < 600ms.
+    if (adx > 50 && adx > ady * 1.6 && dt < 600) {
+      if (dx < 0) stage.next();
+      else stage.prev();
+    }
+  }, { passive: true });
 
   // Counter animation for duel numbers (S5)
   function animateCounters(section) {
