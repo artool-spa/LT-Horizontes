@@ -39,6 +39,32 @@
   @media (orientation: portrait) and (pointer: coarse) {
     #rotate-prompt { display: flex; }
   }
+
+  #rail-toggle {
+    position: fixed;
+    top: max(12px, env(safe-area-inset-top));
+    right: max(12px, env(safe-area-inset-right));
+    z-index: 9000;
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    background: rgba(20, 20, 20, 0.62);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    transition: transform 120ms ease, opacity 200ms ease, background 160ms ease;
+    opacity: 0.75;
+  }
+  #rail-toggle:hover { opacity: 1; transform: scale(1.04); }
+  #rail-toggle:active { transform: scale(0.94); }
+  #rail-toggle svg { width: 22px; height: 22px; fill: currentColor; display: block; }
+  #rail-toggle[data-rail-hidden] svg { opacity: 0.55; }
+  @media print { #rail-toggle { display: none; } }
 </style>
 <script type="application/json" id="speaker-notes">
 [
@@ -60,6 +86,10 @@
 </script>
 </head>
 <body>
+
+<button id="rail-toggle" type="button" aria-label="Mostrar/ocultar miniaturas" title="Mostrar/ocultar miniaturas (M)">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Zm6 0v14h8V5h-8Zm-2 0H6v14h2V5Z"/></svg>
+</button>
 
 <div id="rotate-prompt" aria-hidden="true">
   <div class="icon" aria-hidden="true">
@@ -594,6 +624,34 @@
   });
   // Initial — set after the stage has bootstrapped its slides
   setTimeout(() => setActive(0), 50);
+
+  // Rail visibility toggle — talks to deck-stage via the postMessage channel
+  // it already listens on ('__deck_rail_visible'); persistence is handled by
+  // the component itself in localStorage.
+  const railBtn = document.getElementById('rail-toggle');
+  if (railBtn) {
+    const getRailVisible = () => {
+      try { return localStorage.getItem('deck-stage.railVisible') !== '0'; }
+      catch (e) { return true; }
+    };
+    const syncBtn = () => {
+      if (getRailVisible()) railBtn.removeAttribute('data-rail-hidden');
+      else railBtn.setAttribute('data-rail-hidden', '');
+    };
+    syncBtn();
+    const toggleRail = () => {
+      const next = !getRailVisible();
+      window.postMessage({ type: '__deck_rail_visible', on: next }, '*');
+      syncBtn();
+    };
+    railBtn.addEventListener('click', toggleRail);
+    // Keyboard shortcut: M to toggle.
+    window.addEventListener('keydown', (e) => {
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (e.key === 'm' || e.key === 'M') { toggleRail(); }
+    });
+  }
 
   // Swipe navigation for touch devices.
   // Calls deck-stage.next() / prev() — the public API.

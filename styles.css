@@ -348,9 +348,9 @@ section[data-active] .bar-row .fill { animation: barGrow 700ms cubic-bezier(.2,.
 .s-duel .col.young .num { color: var(--fg-3); }
 .s-duel .col.silver .num { color: var(--coral); }
 .s-duel .col .who {
-  margin-top: 8px;
-  font: 500 26px/1.2 var(--font-body);
-  letter-spacing: 0.12em;
+  margin-top: 16px;
+  font: 500 44px/1.2 var(--font-body);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -393,9 +393,9 @@ section[data-active] .s-duel .urn .fill { animation: urnFill 1.2s ease 0.4s both
 }
 .s-duel .footnote {
   margin-top: 96px;
-  font: 400 22px/1.4 var(--font-body);
+  font: 400 34px/1.4 var(--font-body);
   color: var(--fg-3);
-  max-width: 1100px;
+  max-width: 1400px;
   text-wrap: balance;
 }
 
